@@ -3,6 +3,9 @@ const bodyparser = require('body-parser');
 const { response } = require('express');
 const { request } = require('http');
 
+const db = require("./db.js");
+const { error } = require('console');
+
 // Creating a app application using express 
 
 const app = express();
@@ -18,6 +21,25 @@ app.get("/" , (request , response )=> {
     })
 });
 
+// get all loan applications...........
+app.get("/loans",(request , response) => {
+   db.serialize(() => {
+      db.all("SELECT * FROM loans" , (error , rows) => {
+         if(error){
+            response.json({
+               status : false,
+               error : error
+            })
+         }else{
+            response.json({
+               status : true,
+               rows : rows
+            })
+         }
+      })
+   }
+   )
+});
 // Post APi for new loan application.............
 app.post("/new-loan",(request,response) => {
     const loan_data = request.body
