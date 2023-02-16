@@ -53,14 +53,7 @@ app.post("/new-loan",(request,response) => {
   // You can do same thing using destructing object
  const {firstname , lastname , amount , purpose,email} = loan_data;
 
- // error function creating..........
 
- function errormessage (response , errormessage) {
-    return response.status(404).json({
-        status : false,
-        error : errormessage
-    })
- };
 
  if(!firstname){
     return errormessage(response,"Please provide firstname")
@@ -79,13 +72,103 @@ app.post("/new-loan",(request,response) => {
     return errormessage(response,"please provide email")
  };
 
+  // saving data through API to dbsqlite.....
 
-    response.json({
-        status : true,
-        message : "New-Loan Application Added.....",
-        data : loan_data
-    })
+   const insertsql = `INSERT INTO loans (
+   firstname,
+   lastname,
+   email,
+   purpuse,
+   loan_amount 
+   ) VALUES (
+   "${firstname}",
+   "${lastname}",
+   "${email}",
+   "${purpose}",
+   "${amount}"
+   )`;
+   
+   db.serialize(() => {
+      db.exec(insertsql,(error) => {
+         if (error) {
+            response.status(404).json({
+               status : false,
+               error : error
+            })
+         } else {
+            response.json({
+               status : true,
+               message : "new loan application added........"
+            })
+         }
+      })
+   })
+  
 });
+
+// Calling API through id in postman app...........
+
+app.get("/loans/:id",(request , response)=>{
+   const loan_id = request.params.id;
+
+   const sql = `SELECT * from loans WHERE loan_id=${loan_id}`;
+   db.serialize(()=> {
+      db.get(sql , (error , row) => {
+         if(error || !row) {
+            response.status(404).json({
+               status : false,
+               message : `unable to get laon id on this ${loan_id}`
+            })
+         }else{
+            response.json({
+               status : true,
+               loan : row
+            })
+         }
+      })
+   })
+});
+
+// updating data in API throug update syntax in sql.......
+app.post("/loans/:id" , (request , response) => {
+   const loan_id = request.params.id;
+   const requestbody = request.body;
+   const status = requestbody.status
+   
+   const sql = `
+   UPDATE loans
+   SET status="${status}"
+   WHERE loan_id=${loan_id}
+ `;
+
+   db.serialize(() => {
+      db.get(sql,(error) => {
+         if (error) {
+            response.status(404).json({
+               status : false,
+               message : "cant update the data........"
+            })
+         } else {
+            response.json({
+               status : true,
+               loan_id : loan_id,
+               id_status : status
+            })
+         }
+      })
+   })
+
+ 
+});
+   
+   // error function creating..........
+function errormessage (response , errormessage) {
+   return response.status(404).json({
+       status : false,
+       error : errormessage
+   })
+};
+
 
 
 app.listen(3000,"localhost",() => {
