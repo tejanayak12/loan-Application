@@ -158,7 +158,26 @@ app.post("/loans/:id" , (request , response) => {
       })
    })
 
- 
+});
+
+app.delete("/loans/:id" , (request , response) => {
+   const loan_id = request.params.id;
+   const sql = `DELETE FROM loans WHERE loan_id = ${loan_id}`;
+   db.serialize(() => {
+      db.exec(sql , (error) => {
+         if (error) {
+            response.status(404).json({
+               status : false,
+               message : `UNABLE TO DELETE loan_id ${loan_id}`
+            })
+         }else{
+            response.json({
+               status : true,
+               message : `THE LOAN WAS DELETED ON ID ${loan_id}`
+            })
+         }
+      })
+   })
 });
    
    // error function creating..........
